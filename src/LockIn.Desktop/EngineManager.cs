@@ -8,8 +8,8 @@ namespace LockIn.Desktop;
 internal sealed class EngineManager
 {
     private const string ReleasesApi = "https://api.github.com/repos/ggml-org/whisper.cpp/releases/latest";
-    private const string ModelUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-q5_1.bin";
-    private const string ModelSha1 = "20f54878d608f94e4a8ee3ae56016571d47cba34";
+    private const string ModelUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-q8_0.bin";
+    private const string ModelSha1 = "9d75ff4ccfa0a8217870d7405cf8cef0a5579852";
     private static readonly HttpClient Client = CreateClient();
 
     public bool IsReady => File.Exists(AppPaths.WhisperExecutable) && File.Exists(AppPaths.DefaultModel);

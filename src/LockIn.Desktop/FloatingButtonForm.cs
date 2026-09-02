@@ -1,6 +1,7 @@
 namespace LockIn.Desktop;
 
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 
 internal enum TalkButtonState
 {
@@ -15,6 +16,7 @@ internal sealed class FloatingButtonForm : Form
     private const int WsExToolWindow = 0x00000080;
     private readonly Button talkButton;
     private readonly System.Windows.Forms.Timer dockingTimer;
+    private readonly ToolTip toolTip = new();
     private Point dragOrigin;
     private bool dragging;
     private bool dockEnabled = true;
@@ -55,6 +57,7 @@ internal sealed class FloatingButtonForm : Form
         };
         talkButton.FlatAppearance.BorderColor = Color.FromArgb(95, 95, 105);
         talkButton.FlatAppearance.BorderSize = 1;
+        talkButton.Paint += DrawDockedIcon;
         talkButton.Click += (_, _) => { if (!dragging) ToggleRequested?.Invoke(this, EventArgs.Empty); };
         talkButton.MouseDown += OnDragStart;
         talkButton.MouseMove += OnDragMove;
@@ -63,7 +66,6 @@ internal sealed class FloatingButtonForm : Form
             if (eventArgs.Button == MouseButtons.Right) SettingsRequested?.Invoke(this, EventArgs.Empty);
             BeginInvoke(() => dragging = false);
         };
-        var toolTip = new ToolTip();
         toolTip.SetToolTip(talkButton, "TalkType — click once to listen, click again to transcribe.");
         Controls.Add(talkButton);
         dockingTimer = new System.Windows.Forms.Timer { Interval = 300 };
@@ -94,16 +96,12 @@ internal sealed class FloatingButtonForm : Form
     {
         if (docked)
         {
-            talkButton.Text = currentState switch
-            {
-                TalkButtonState.Listening => "■",
-                TalkButtonState.Working => "…",
-                _ => "\uE720"
-            };
+            talkButton.Text = string.Empty;
             talkButton.ForeColor = currentState == TalkButtonState.Listening
                 ? Color.FromArgb(242, 63, 67)
-                : Color.FromArgb(219, 222, 225);
+                : Color.FromArgb(196, 181, 253);
             talkButton.BackColor = dockedBackground;
+            talkButton.Invalidate();
             return;
         }
 
@@ -234,6 +232,7 @@ internal sealed class FloatingButtonForm : Form
         talkButton.Font = new Font(SystemFonts.DefaultFont.FontFamily, 11, FontStyle.Bold);
         talkButton.FlatAppearance.BorderSize = 1;
         talkButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(58, 58, 64);
+        toolTip.SetToolTip(talkButton, "TalkType — click once to listen, click again to transcribe.");
         ApplyStateAppearance();
         Location = freeLocation;
     }
@@ -246,12 +245,55 @@ internal sealed class FloatingButtonForm : Form
         TransparencyKey = Color.Empty;
         BackColor = background;
         talkButton.BackColor = background;
-        talkButton.Font = currentState == TalkButtonState.Ready
-            ? new Font("Segoe MDL2 Assets", 14, FontStyle.Regular)
-            : new Font(SystemFonts.DefaultFont.FontFamily, 12, FontStyle.Bold);
+        talkButton.Font = new Font(SystemFonts.DefaultFont.FontFamily, 12, FontStyle.Bold);
         talkButton.FlatAppearance.BorderSize = 0;
         talkButton.FlatAppearance.MouseOverBackColor = ControlPaint.Light(background, 0.12f);
+        // Moving the overlay as Discord resizes used to reopen the native
+        // tooltip repeatedly. A docked icon is self-explanatory and stays quiet.
+        toolTip.Hide(talkButton);
+        toolTip.SetToolTip(talkButton, null);
         ApplyStateAppearance();
+    }
+
+    private void DrawDockedIcon(object? sender, PaintEventArgs eventArgs)
+    {
+        if (!docked) return;
+        var graphics = eventArgs.Graphics;
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        var color = currentState == TalkButtonState.Listening
+            ? Color.FromArgb(242, 63, 67)
+            : Color.FromArgb(196, 181, 253);
+
+        if (currentState == TalkButtonState.Working)
+        {
+            using var brush = new SolidBrush(color);
+            for (var index = 0; index < 3; index++)
+                graphics.FillEllipse(brush, 10 + index * 6, 15, 3.5f, 3.5f);
+            return;
+        }
+
+        if (currentState == TalkButtonState.Listening)
+        {
+            using var brush = new SolidBrush(color);
+            graphics.FillRectangle(brush, 12, 12, 10, 10);
+            return;
+        }
+
+        using var pen = new Pen(color, 2f)
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+            LineJoin = LineJoin.Round
+        };
+        using var microphone = new GraphicsPath();
+        microphone.AddArc(13, 7, 8, 8, 180, 180);
+        microphone.AddLine(21, 11, 21, 17);
+        microphone.AddArc(13, 13, 8, 8, 0, 180);
+        microphone.AddLine(13, 17, 13, 11);
+        graphics.DrawPath(pen, microphone);
+        graphics.DrawArc(pen, 10, 12, 14, 12, 0, 180);
+        graphics.DrawLine(pen, 17, 24, 17, 27);
+        graphics.DrawLine(pen, 13, 27, 21, 27);
     }
 
     private static Color SampleScreenColor(int x, int y)
@@ -289,7 +331,11 @@ internal sealed class FloatingButtonForm : Form
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) dockingTimer.Dispose();
+        if (disposing)
+        {
+            dockingTimer.Dispose();
+            toolTip.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

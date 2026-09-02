@@ -32,7 +32,7 @@ from the published source for tagged releases.
 2. Under **Assets**, download `TalkType-Setup-*-x64.exe`.
 3. Exit an older TalkType copy from its system-tray menu, then run the installer.
 4. Launch TalkType and select **Download local speech engine**. The initial
-   engine and fast English model download is approximately 181 MiB.
+   engine and balanced English model download is approximately 252 MiB.
 5. Focus a text box and press `Ctrl+Win+Space` once to record and again to
    transcribe. TalkType automatically selects a fallback shortcut if that one
    is already registered by another application.
@@ -63,7 +63,7 @@ Developers can run from source with:
 dotnet run --project .\src\LockIn.Desktop
 ```
 
-The speed-balanced English default is `small.en-q5_1`. Advanced users can still
+The balanced English default is `small.en-q8_0`. Advanced users can still
 override the managed engine and model with `LOCKIN_WHISPER_EXE` and
 `LOCKIN_WHISPER_MODEL`.
 
