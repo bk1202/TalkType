@@ -28,7 +28,7 @@ from the published source for tagged releases.
 
 Extract the entire ZIP first—do not run the executable from inside the ZIP.
 Then open the packaged `TalkType.exe`. On first launch, click
-**Download local speech engine**. The default download is approximately 560 MiB.
+**Download local speech engine**. The default download is approximately 181 MiB.
 After setup, focus any text field and press `Ctrl+Win+Space` to start and stop.
 If that shortcut is occupied, TalkType automatically chooses an available
 fallback and tells you which one it selected.
@@ -39,7 +39,7 @@ Developers can run from source with:
 dotnet run --project .\src\LockIn.Desktop
 ```
 
-The accuracy-first default is `large-v3-turbo-q5_0`. Advanced users can still
+The speed-balanced English default is `small.en-q5_1`. Advanced users can still
 override the managed engine and model with `LOCKIN_WHISPER_EXE` and
 `LOCKIN_WHISPER_MODEL`.
 

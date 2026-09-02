@@ -29,6 +29,8 @@ internal sealed class WhisperCppTranscriber
         startInfo.ArgumentList.Add("-of");
         startInfo.ArgumentList.Add(outputBase);
         startInfo.ArgumentList.Add("--no-timestamps");
+        startInfo.ArgumentList.Add("--threads");
+        startInfo.ArgumentList.Add(GetThreadCount().ToString());
         startInfo.ArgumentList.Add("-l");
         startInfo.ArgumentList.Add(settings.Language);
         var vocabulary = settings.Vocabulary.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -46,5 +48,12 @@ internal sealed class WhisperCppTranscriber
         var transcriptPath = outputBase + ".txt";
         try { return (await File.ReadAllTextAsync(transcriptPath, cancellationToken)).Trim(); }
         finally { if (File.Exists(transcriptPath)) File.Delete(transcriptPath); }
+    }
+
+    private static int GetThreadCount()
+    {
+        // Leave one logical processor available for the foreground app while
+        // allowing whisper.cpp to scale beyond its conservative default.
+        return Math.Clamp(Environment.ProcessorCount - 1, 2, 12);
     }
 }

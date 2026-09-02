@@ -8,8 +8,8 @@ namespace LockIn.Desktop;
 internal sealed class EngineManager
 {
     private const string ReleasesApi = "https://api.github.com/repos/ggml-org/whisper.cpp/releases/latest";
-    private const string ModelUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin";
-    private const string ModelSha1 = "e050f7970618a659205450ad97eb95a18d69c9ee";
+    private const string ModelUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-q5_1.bin";
+    private const string ModelSha1 = "20f54878d608f94e4a8ee3ae56016571d47cba34";
     private static readonly HttpClient Client = CreateClient();
 
     public bool IsReady => File.Exists(AppPaths.WhisperExecutable) && File.Exists(AppPaths.DefaultModel);
@@ -56,7 +56,7 @@ internal sealed class EngineManager
         var partial = AppPaths.DefaultModel + ".download";
         try
         {
-            await DownloadAsync(ModelUrl, partial, "Downloading accuracy model", 10, 88, progress, cancellationToken);
+            await DownloadAsync(ModelUrl, partial, "Downloading fast English model", 10, 88, progress, cancellationToken);
             progress.Report(new("Verifying model…", 99));
             string actual;
             await using (var stream = File.OpenRead(partial))

@@ -149,7 +149,7 @@ internal sealed class SettingsForm : Form
 
     private void RefreshEngineStatus()
     {
-        status.Text = engine.IsReady ? "Ready — transcription stays on this computer." : "Setup required (approximately 560 MiB).";
+        status.Text = engine.IsReady ? "Ready — fast English model, fully local." : "Setup required (approximately 181 MiB).";
         progress.Value = engine.IsReady ? 100 : 0;
         install.Text = engine.IsReady ? "Recheck local engine" : "Download local speech engine";
     }
