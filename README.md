@@ -3,7 +3,7 @@
 Local-first, system-wide voice typing. Press a global shortcut, speak, press it
 again, and the cleaned transcript is pasted into the app you were using.
 
-TalkType is being prepared as an open-source desktop application. Windows users
+TalkType is being made as an open-source desktop application. Windows users
 receive both a portable build and a normal installer; GitHub Actions builds both
 from the published source for tagged releases.
 
