@@ -13,6 +13,7 @@ internal sealed class TalkTypeContext : ApplicationContext
     private WaveRecorder? recorder;
     private IntPtr destinationWindow;
     private bool busy;
+    private bool previewSession;
 
     public TalkTypeContext()
     {
@@ -29,12 +30,14 @@ internal sealed class TalkTypeContext : ApplicationContext
         hotkey.Pressed += async (_, _) => await ToggleAsync();
         settingsForm = new SettingsForm(settings, engine);
         settingsForm.SettingsChanged += (_, _) => ApplySettings();
+        settingsForm.ToggleRequested += async (_, _) => await ToggleAsync(true);
+        tray.DoubleClick += (_, _) => ShowSettings();
         floatingButton = new FloatingButtonForm();
         floatingButton.SetDockingEnabled(settings.DockToMessagingApps);
         floatingButton.SetAlwaysVisible(settings.AlwaysShowFloatingButton);
         floatingButton.ToggleRequested += async (_, _) => await ToggleAsync();
         floatingButton.SettingsRequested += (_, _) => ShowSettings();
-        if (!engine.IsReady) settingsForm.Show();
+        settingsForm.Show();
         if (shortcutChanged)
         {
             settingsForm.Show();
@@ -94,7 +97,7 @@ internal sealed class TalkTypeContext : ApplicationContext
         return menu;
     }
 
-    private async Task ToggleAsync()
+    private async Task ToggleAsync(bool preview = false)
     {
         if (busy) return;
         try
@@ -109,9 +112,11 @@ internal sealed class TalkTypeContext : ApplicationContext
                     return;
                 }
                 destinationWindow = NativeMethods.GetForegroundWindow();
+                previewSession = preview || destinationWindow == settingsForm.Handle;
                 recorder = new WaveRecorder();
                 recorder.Start();
                 floatingButton.SetState(TalkButtonState.Listening);
+                settingsForm.SetRecordingState(TalkButtonState.Listening);
                 tray.Text = "TalkType — listening…";
                 Notify("Listening", $"Press {settings.HotkeyLabel} when you are done.");
                 return;
@@ -119,6 +124,7 @@ internal sealed class TalkTypeContext : ApplicationContext
 
             busy = true;
             floatingButton.SetState(TalkButtonState.Working);
+            settingsForm.SetRecordingState(TalkButtonState.Working);
             tray.Text = "TalkType — transcribing…";
             var wavePath = recorder.Stop();
             recorder.Dispose();
@@ -130,11 +136,16 @@ internal sealed class TalkTypeContext : ApplicationContext
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     Notify("Nothing heard", "No speech was detected.");
+                    settingsForm.ShowFeedback("No speech detected. Check your microphone and try again.");
                     return;
                 }
-                if (settings.SaveHistory) SaveHistory(text);
-                PasteIntoDestination(text);
-                Notify("Pasted", text.Length > 120 ? text[..120] + "…" : text);
+                settingsForm.SetTranscript(text);
+                if (!previewSession)
+                {
+                    if (settings.SaveHistory) SaveHistory(text);
+                    PasteIntoDestination(text);
+                    Notify("Pasted", "Your transcript is ready in the destination app.");
+                }
             }
             finally
             {
@@ -146,30 +157,26 @@ internal sealed class TalkTypeContext : ApplicationContext
             recorder?.Dispose();
             recorder = null;
             Notify("TalkType error", exception.Message);
+            settingsForm.ShowFeedback("Recording couldn't finish: " + exception.Message);
         }
         finally
         {
             busy = false;
-            floatingButton.SetState(TalkButtonState.Ready);
-            tray.Text = $"TalkType — {settings.HotkeyLabel}";
+            var state = recorder is null ? TalkButtonState.Ready : TalkButtonState.Listening;
+            floatingButton.SetState(state);
+            settingsForm.SetRecordingState(state);
+            tray.Text = recorder is null ? $"TalkType — {settings.HotkeyLabel}" : "TalkType — listening…";
         }
     }
 
     private void ApplySettings()
     {
-        try
-        {
             hotkey.Register(settings);
             tray.Text = $"TalkType — {settings.HotkeyLabel}";
             floatingButton.SetAlwaysVisible(settings.AlwaysShowFloatingButton);
             floatingButton.SetDockingEnabled(settings.DockToMessagingApps);
             if (showEverywhereMenuItem is not null)
                 showEverywhereMenuItem.Checked = settings.AlwaysShowFloatingButton;
-        }
-        catch (Exception exception)
-        {
-            Notify("Shortcut unavailable", exception.Message);
-        }
     }
 
     private void ShowSettings()

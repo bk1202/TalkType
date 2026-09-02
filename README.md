@@ -11,10 +11,10 @@ from the published source for tagged releases.
 
 - Configurable global push-to-talk toggle (`Ctrl+Win+Space` by default)
 - Always-on-top talk button: click once to listen and again to transcribe
-- App-aware compact docking beside Discord and WhatsApp message controls
+- App-aware Talk button above Discord and WhatsApp message fields
 - Discord Stable, Canary, PTB, Vesktop, and WhatsApp detection
-- Transparent, icon-only docked microphone styled to blend with message toolbars
-- Separate Discord and WhatsApp offsets that preserve native toolbar controls
+- Labelled Talk / Stop / Working states
+- Alternate chat positions and a draggable fallback outside the message toolbar
 - Contextual visibility by default, with a tray toggle to show it everywhere
 - Local WAV recording (16 kHz, mono, 16-bit PCM)
 - Offline transcription through `whisper.cpp`
@@ -31,7 +31,7 @@ from the published source for tagged releases.
 1. Open the [latest TalkType release](https://github.com/bk1202/TalkType/releases/latest).
 2. Under **Assets**, download `TalkType-Setup-*-x64.exe`.
 3. Exit an older TalkType copy from its system-tray menu, then run the installer.
-4. Launch TalkType and select **Download local speech engine**. The initial
+4. Launch TalkType and select **Download voice model** on Home if setup is needed. The initial
    engine and balanced English model download is approximately 252 MiB.
 5. Focus a text box and press `Ctrl+Win+Space` once to record and again to
    transcribe. TalkType automatically selects a fallback shortcut if that one

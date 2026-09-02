@@ -1,5 +1,5 @@
 #define MyAppName "TalkType"
-#define MyAppVersion "0.1.3-alpha"
+#define MyAppVersion "0.1.6-alpha"
 #define MyAppPublisher "TalkType contributors"
 #define MyAppExeName "TalkType.exe"
 #ifndef MySourceDir

@@ -3,6 +3,7 @@ namespace TalkType.Desktop;
 internal sealed class HotkeyWindow : NativeWindow, IDisposable
 {
     private const int HotkeyId = 0x4C49;
+    private (uint Modifiers, uint Key)? registered;
     public event EventHandler? Pressed;
 
     public HotkeyWindow()
@@ -19,7 +20,14 @@ internal sealed class HotkeyWindow : NativeWindow, IDisposable
     public bool TryRegister(AppSettings settings)
     {
         NativeMethods.UnregisterHotKey(Handle, HotkeyId);
-        return NativeMethods.RegisterHotKey(Handle, HotkeyId, settings.HotkeyModifiers, (uint)settings.HotkeyKey);
+        if (NativeMethods.RegisterHotKey(Handle, HotkeyId, settings.HotkeyModifiers, (uint)settings.HotkeyKey))
+        {
+            registered = (settings.HotkeyModifiers, (uint)settings.HotkeyKey);
+            return true;
+        }
+        if (registered is { } previous)
+            NativeMethods.RegisterHotKey(Handle, HotkeyId, previous.Modifiers, previous.Key);
+        return false;
     }
 
     protected override void WndProc(ref Message message)

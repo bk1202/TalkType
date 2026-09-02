@@ -4,6 +4,29 @@ namespace TalkType.Desktop;
 
 internal static class ComposerLocator
 {
+    internal static bool HasInteractiveControlAt(IntPtr window, Rectangle bounds)
+    {
+        try
+        {
+            var root = AutomationElement.FromHandle(window);
+            var controls = root.FindAll(TreeScope.Descendants, new OrCondition(
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit),
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem)));
+            foreach (AutomationElement control in controls)
+            {
+                var current = control.Current;
+                if (current.IsOffscreen) continue;
+                var rectangle = current.BoundingRectangle;
+                if (!rectangle.IsEmpty && rectangle.IntersectsWith(new System.Windows.Rect(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
+                    return true;
+            }
+            return false;
+        }
+        catch (ElementNotAvailableException) { return true; }
+        catch (InvalidOperationException) { return true; }
+    }
+
     public static bool TryFind(IntPtr window, bool isDiscord, out Rectangle bounds)
     {
         bounds = Rectangle.Empty;
@@ -27,6 +50,7 @@ internal static class ComposerLocator
 
                 var name = current.Name ?? string.Empty;
                 if (!IsMessageComposerName(name, isDiscord)) continue;
+                if (IsInsideDialog(element, root)) continue;
                 var score = rectangle.Bottom + rectangle.Width / 100;
                 if (score <= bestScore) continue;
                 bestScore = score;
@@ -62,5 +86,20 @@ internal static class ComposerLocator
 
         return normalized.Equals("Type a message", StringComparison.OrdinalIgnoreCase) ||
             normalized.Equals("Message", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsInsideDialog(AutomationElement element, AutomationElement root)
+    {
+        var parent = TreeWalker.ControlViewWalker.GetParent(element);
+        for (var depth = 0; parent is not null && !parent.Equals(root) && depth < 40; depth++)
+        {
+            var current = parent.Current;
+            // Profile cards also expose "Message @name" inputs. They are not
+            // the channel composer and must not win the bottommost-field match.
+            if (current.ControlType == ControlType.Window ||
+                current.LocalizedControlType.Equals("dialog", StringComparison.OrdinalIgnoreCase)) return true;
+            parent = TreeWalker.ControlViewWalker.GetParent(parent);
+        }
+        return false;
     }
 }
