@@ -3,7 +3,7 @@
 Local-first, system-wide voice typing. Press a global shortcut, speak, press it
 again, and the cleaned transcript is pasted into the app you were using.
 
-TalkType is being prepared as an open-source desktop application. Windows users
+TalkType is being made as an open-source desktop application. Windows users
 receive both a portable build and a normal installer; GitHub Actions builds both
 from the published source for tagged releases.
 
@@ -57,9 +57,3 @@ Recordings are created in the operating system temp directory and deleted after
 transcription. `whisper.cpp` runs locally. The only lasting text is what the user
 pastes into the destination app. Transcript history is optional and can be
 disabled in Settings.
-
-## Build an installer
-
-Publish the self-contained app, then compile `installer/TalkType.iss` with Inno
-Setup 7 (or a compatible Inno Setup 6 compiler). The installer uses a per-user
-location and does not require administrator privileges.
