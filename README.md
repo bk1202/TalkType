@@ -14,7 +14,7 @@ from the published source for tagged releases.
 - Experimental icon-only mic overlaid in Discord and WhatsApp message bars
 - Discord Stable, Canary, PTB, Vesktop, and WhatsApp detection
 - Labelled Talk / Stop / Working states
-- White/red chat mic with a bar-matched background; original offsets may overlap controls in some layouts
+- White/red chat mic with a bar-matched background; measured toolbar anchoring and overlap checks (hidden when a safe position cannot be determined)
 - Contextual visibility by default, with a tray toggle to show it everywhere
 - Local WAV recording (16 kHz, mono, 16-bit PCM)
 - Offline transcription through `whisper.cpp`

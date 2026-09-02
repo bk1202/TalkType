@@ -154,7 +154,7 @@ internal sealed class FloatingButtonForm : Form
             return;
         }
 
-        if (!dockEnabled || !NativeMethods.GetWindowRect(foreground, out var rectangle))
+        if (!dockEnabled)
         {
             ShowOrHideAwayFromMessagingApps();
             return;
@@ -163,16 +163,15 @@ internal sealed class FloatingButtonForm : Form
         var isDiscord = processName.Contains("Discord", StringComparison.OrdinalIgnoreCase) ||
             processName.Contains("Vesktop", StringComparison.OrdinalIgnoreCase) ||
             title.Contains("Discord", StringComparison.OrdinalIgnoreCase);
-        if (!ComposerLocator.TryFind(foreground, isDiscord, out var composer))
+        if (!ComposerLocator.TryFindMicBounds(foreground, isDiscord, out var buttonBounds))
         {
             // A Discord/WhatsApp window alone is not enough. Search, settings,
             // pop-outs, and other text fields must never receive the button.
-            ShowOrHideAwayFromMessagingApps();
+            // No safe slot: don't substitute the global button over this app.
+            if (Visible) Hide();
             return;
         }
 
-        var windowBounds = Rectangle.FromLTRB(rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom);
-        var buttonBounds = ChatMicPlacement.GetBounds(composer, windowBounds, isDiscord);
         if (!docked || Bounds != buttonBounds)
         {
             if (Visible) Hide();

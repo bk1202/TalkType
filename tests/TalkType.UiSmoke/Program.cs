@@ -86,19 +86,36 @@ internal static class Program
         Console.WriteLine("PASS: compact chat microphone states and global-size restoration.");
         var placement = assembly.GetType("TalkType.Desktop.ChatMicPlacement")!.GetMethod("GetBounds")!;
         var window = new Rectangle(0, 0, 1920, 1080);
-        var composer = new Rectangle(570, 1010, 700, 40);
-        var bounds = (Rectangle)placement.Invoke(null, [composer, window, true])!;
-        if (bounds != new Rectangle(1278, 1013, 34, 34))
-            throw new Exception("Original in-bar offsets changed");
-        var wide = new Rectangle(570, 1010, 1300, 40);
-        if (((Rectangle)placement.Invoke(null, [wide, window, true])!).X != 1643)
-            throw new Exception("Discord right clamp changed");
-        if (((Rectangle)placement.Invoke(null, [wide, window, false])!).X != 1794)
-            throw new Exception("WhatsApp right clamp changed");
-        var multiline = new Rectangle(570, 950, 700, 100);
-        if (((Rectangle)placement.Invoke(null, [multiline, window, true])!).Y != 983)
-            throw new Exception("Original multiline centering changed");
-        Console.WriteLine("PASS: restored in-bar offsets, Discord/WhatsApp clamps and multiline centering.");
+        Rectangle Place(Rectangle composer, Rectangle anchor, params Rectangle[] occupied) =>
+            (Rectangle)placement.Invoke(null, [composer, anchor, window, occupied])!;
+        var composer = new Rectangle(570, 1010, 1120, 40);
+        var gift = new Rectangle(1690, 1012, 32, 32);
+        var bounds = Place(composer, gift, gift);
+        if (bounds != new Rectangle(1650, 1011, 34, 34) || bounds.IntersectsWith(gift))
+            throw new Exception("Mic must sit left of the gift hit target, not on it");
+        var sidebarGift = new Rectangle(1340, 1012, 32, 32);
+        if (Place(composer with { Width = 770 }, sidebarGift, sidebarGift).X != 1300)
+            throw new Exception("Mic did not follow the toolbar when sidebar opened");
+        var multiline = new Rectangle(570, 950, 1120, 100);
+        if (Place(multiline, gift, gift).Y != bounds.Y)
+            throw new Exception("Multiline editor must not pull the mic above its toolbar");
+        if (!Place(composer, gift, gift, bounds).IsEmpty)
+            throw new Exception("Overlapping control or text must suppress the mic");
+        if (!Place(composer, Rectangle.Empty).IsEmpty)
+            throw new Exception("Missing toolbar must not use a guessed fallback");
+        if (!Place(composer, new Rectangle(590, 1012, 32, 32)).IsEmpty)
+            throw new Exception("Narrow composer must not place mic outside input");
+        var voice = new Rectangle(1800, 1012, 40, 40);
+        if (Place(composer, voice, voice).IntersectsWith(voice))
+            throw new Exception("WhatsApp voice control must not be covered");
+        for (var left = 650; left < 1700; left += 25)
+        {
+            var anchor = new Rectangle(left, 1012, 32, 32);
+            var result = Place(composer, anchor, anchor);
+            if (result.IsEmpty || result.Right > anchor.Left - 3 || result.IntersectsWith(anchor))
+                throw new Exception("Resize sweep overlapped the toolbar");
+        }
+        Console.WriteLine("PASS: toolbar anchoring, sidebar/resize tracking, multiline alignment, collision rejection and no guessed fallback.");
         floating.Hide();
     }
 
