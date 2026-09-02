@@ -67,14 +67,6 @@ The balanced English default is `small.en-q8_0`. Advanced users can still
 override the managed engine and model with `LOCKIN_WHISPER_EXE` and
 `LOCKIN_WHISPER_MODEL`.
 
-## Product architecture
-
-The desktop milestone proves the core loop. macOS needs a menu-bar app with
-Accessibility permission. iOS needs a Keyboard Extension plus a containing app.
-Those shells should share the
-same transcription policy: local by default, explicit opt-in for any cloud
-backend, and conservative cleanup that never invents content.
-
 ## Privacy
 
 Recordings are created in the operating system temp directory and deleted after
