@@ -1,0 +1,10 @@
+.appdata/
+.dotnet-cli/
+.nuget-packages/
+.smoke-appdata/
+.tools/
+**/bin/
+**/obj/
+artifacts/
+*.user
+*.suo
