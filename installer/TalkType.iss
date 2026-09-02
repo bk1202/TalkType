@@ -1,5 +1,5 @@
 #define MyAppName "TalkType"
-#define MyAppVersion "0.1.2-alpha"
+#define MyAppVersion "0.1.3-alpha"
 #define MyAppPublisher "TalkType contributors"
 #define MyAppExeName "TalkType.exe"
 #ifndef MySourceDir
@@ -25,7 +25,7 @@ WizardStyle=modern dynamic
 CloseApplications=yes
 RestartApplications=no
 UninstallDisplayIcon={app}\{#MyAppExeName}
-VersionInfoVersion=0.1.2.0
+VersionInfoVersion=0.1.3.0
 VersionInfoProductName={#MyAppName}
 VersionInfoDescription=Private, local-first voice typing
 

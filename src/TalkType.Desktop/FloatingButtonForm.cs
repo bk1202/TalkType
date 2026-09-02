@@ -16,7 +16,6 @@ internal sealed class FloatingButtonForm : Form
     private const int WsExToolWindow = 0x00000080;
     private readonly Button talkButton;
     private readonly System.Windows.Forms.Timer dockingTimer;
-    private readonly ToolTip toolTip = new();
     private Point dragOrigin;
     private bool dragging;
     private bool dockEnabled = true;
@@ -32,7 +31,7 @@ internal sealed class FloatingButtonForm : Form
     public FloatingButtonForm()
     {
         Text = "TalkType";
-        Size = new Size(82, 82);
+        Size = new Size(50, 50);
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar = false;
         TopMost = true;
@@ -41,23 +40,23 @@ internal sealed class FloatingButtonForm : Form
             Math.Max(0, Screen.PrimaryScreen!.WorkingArea.Right - Width - 24),
             Math.Max(0, Screen.PrimaryScreen.WorkingArea.Bottom - Height - 24));
         freeLocation = Location;
-        BackColor = Color.FromArgb(28, 28, 30);
-        Padding = new Padding(6);
+        BackColor = Color.FromArgb(24, 27, 39);
+        Padding = Padding.Empty;
 
         talkButton = new Button
         {
             Dock = DockStyle.Fill,
-            Text = "Talk",
+            Text = string.Empty,
             FlatStyle = FlatStyle.Flat,
-            BackColor = Color.FromArgb(44, 44, 48),
+            BackColor = Color.FromArgb(24, 27, 39),
             ForeColor = Color.White,
             Font = new Font(SystemFonts.DefaultFont.FontFamily, 11, FontStyle.Bold),
             Cursor = Cursors.Hand,
             TabStop = false
         };
-        talkButton.FlatAppearance.BorderColor = Color.FromArgb(95, 95, 105);
+        talkButton.FlatAppearance.BorderColor = Color.FromArgb(126, 105, 255);
         talkButton.FlatAppearance.BorderSize = 1;
-        talkButton.Paint += DrawDockedIcon;
+        talkButton.Paint += DrawTalkIcon;
         talkButton.Click += (_, _) => { if (!dragging) ToggleRequested?.Invoke(this, EventArgs.Empty); };
         talkButton.MouseDown += OnDragStart;
         talkButton.MouseMove += OnDragMove;
@@ -66,8 +65,8 @@ internal sealed class FloatingButtonForm : Form
             if (eventArgs.Button == MouseButtons.Right) SettingsRequested?.Invoke(this, EventArgs.Empty);
             BeginInvoke(() => dragging = false);
         };
-        toolTip.SetToolTip(talkButton, "TalkType — click once to listen, click again to transcribe.");
         Controls.Add(talkButton);
+        ApplyFloatingAppearance();
         dockingTimer = new System.Windows.Forms.Timer { Interval = 300 };
         dockingTimer.Tick += (_, _) => UpdateDocking();
         dockingTimer.Start();
@@ -89,7 +88,6 @@ internal sealed class FloatingButtonForm : Form
     {
         currentState = state;
         ApplyStateAppearance();
-        talkButton.Enabled = state != TalkButtonState.Working;
     }
 
     private void ApplyStateAppearance()
@@ -105,13 +103,17 @@ internal sealed class FloatingButtonForm : Form
             return;
         }
 
-        (talkButton.Text, talkButton.BackColor) = currentState switch
+        talkButton.Text = string.Empty;
+        talkButton.BackColor = currentState switch
         {
-            TalkButtonState.Listening => ("Stop", Color.FromArgb(190, 45, 55)),
-            TalkButtonState.Working => ("…", Color.FromArgb(65, 95, 180)),
-            _ => ("Talk", Color.FromArgb(44, 44, 48))
+            TalkButtonState.Listening => Color.FromArgb(68, 29, 39),
+            TalkButtonState.Working => Color.FromArgb(31, 43, 78),
+            _ => Color.FromArgb(24, 27, 39)
         };
-        talkButton.ForeColor = Color.White;
+        talkButton.ForeColor = currentState == TalkButtonState.Listening
+            ? Color.FromArgb(255, 104, 117)
+            : Color.FromArgb(196, 181, 253);
+        talkButton.Invalidate();
     }
 
     public void SetDockingEnabled(bool enabled)
@@ -225,16 +227,25 @@ internal sealed class FloatingButtonForm : Form
     {
         if (!docked) return;
         docked = false;
-        TransparencyKey = Color.Empty;
-        BackColor = Color.FromArgb(28, 28, 30);
-        Size = new Size(82, 82);
-        Padding = new Padding(6);
-        talkButton.Font = new Font(SystemFonts.DefaultFont.FontFamily, 11, FontStyle.Bold);
-        talkButton.FlatAppearance.BorderSize = 1;
-        talkButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(58, 58, 64);
-        toolTip.SetToolTip(talkButton, "TalkType — click once to listen, click again to transcribe.");
-        ApplyStateAppearance();
+        ApplyFloatingAppearance();
         Location = freeLocation;
+    }
+
+    private void ApplyFloatingAppearance()
+    {
+        Size = new Size(50, 50);
+        Padding = Padding.Empty;
+        BackColor = Color.FromArgb(24, 27, 39);
+        Region?.Dispose();
+        using (var circle = new GraphicsPath())
+        {
+            circle.AddEllipse(ClientRectangle);
+            Region = new Region(circle);
+        }
+        talkButton.FlatAppearance.BorderColor = Color.FromArgb(126, 105, 255);
+        talkButton.FlatAppearance.BorderSize = 1;
+        talkButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(39, 43, 61);
+        ApplyStateAppearance();
     }
 
     private void ApplyDockedAppearance(Color background)
@@ -242,40 +253,39 @@ internal sealed class FloatingButtonForm : Form
         dockedBackground = background;
         Size = new Size(34, 34);
         Padding = Padding.Empty;
+        Region?.Dispose();
+        Region = null;
         TransparencyKey = Color.Empty;
         BackColor = background;
         talkButton.BackColor = background;
         talkButton.Font = new Font(SystemFonts.DefaultFont.FontFamily, 12, FontStyle.Bold);
         talkButton.FlatAppearance.BorderSize = 0;
         talkButton.FlatAppearance.MouseOverBackColor = ControlPaint.Light(background, 0.12f);
-        // Moving the overlay as Discord resizes used to reopen the native
-        // tooltip repeatedly. A docked icon is self-explanatory and stays quiet.
-        toolTip.Hide(talkButton);
-        toolTip.SetToolTip(talkButton, null);
         ApplyStateAppearance();
     }
 
-    private void DrawDockedIcon(object? sender, PaintEventArgs eventArgs)
+    private void DrawTalkIcon(object? sender, PaintEventArgs eventArgs)
     {
-        if (!docked) return;
         var graphics = eventArgs.Graphics;
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        var offsetX = (talkButton.ClientSize.Width - 34) / 2f;
+        var offsetY = (talkButton.ClientSize.Height - 34) / 2f;
         var color = currentState == TalkButtonState.Listening
-            ? Color.FromArgb(242, 63, 67)
+            ? Color.FromArgb(255, 104, 117)
             : Color.FromArgb(196, 181, 253);
 
         if (currentState == TalkButtonState.Working)
         {
             using var brush = new SolidBrush(color);
             for (var index = 0; index < 3; index++)
-                graphics.FillEllipse(brush, 10 + index * 6, 15, 3.5f, 3.5f);
+                graphics.FillEllipse(brush, offsetX + 10 + index * 6, offsetY + 15, 3.5f, 3.5f);
             return;
         }
 
         if (currentState == TalkButtonState.Listening)
         {
             using var brush = new SolidBrush(color);
-            graphics.FillRectangle(brush, 12, 12, 10, 10);
+            graphics.FillRectangle(brush, offsetX + 12, offsetY + 12, 10, 10);
             return;
         }
 
@@ -286,14 +296,14 @@ internal sealed class FloatingButtonForm : Form
             LineJoin = LineJoin.Round
         };
         using var microphone = new GraphicsPath();
-        microphone.AddArc(13, 7, 8, 8, 180, 180);
-        microphone.AddLine(21, 11, 21, 17);
-        microphone.AddArc(13, 13, 8, 8, 0, 180);
-        microphone.AddLine(13, 17, 13, 11);
+        microphone.AddArc(offsetX + 13, offsetY + 7, 8, 8, 180, 180);
+        microphone.AddLine(offsetX + 21, offsetY + 11, offsetX + 21, offsetY + 17);
+        microphone.AddArc(offsetX + 13, offsetY + 13, 8, 8, 0, 180);
+        microphone.AddLine(offsetX + 13, offsetY + 17, offsetX + 13, offsetY + 11);
         graphics.DrawPath(pen, microphone);
-        graphics.DrawArc(pen, 10, 12, 14, 12, 0, 180);
-        graphics.DrawLine(pen, 17, 24, 17, 27);
-        graphics.DrawLine(pen, 13, 27, 21, 27);
+        graphics.DrawArc(pen, offsetX + 10, offsetY + 12, 14, 12, 0, 180);
+        graphics.DrawLine(pen, offsetX + 17, offsetY + 24, offsetX + 17, offsetY + 27);
+        graphics.DrawLine(pen, offsetX + 13, offsetY + 27, offsetX + 21, offsetY + 27);
     }
 
     private static Color SampleScreenColor(int x, int y)
@@ -334,7 +344,6 @@ internal sealed class FloatingButtonForm : Form
         if (disposing)
         {
             dockingTimer.Dispose();
-            toolTip.Dispose();
         }
         base.Dispose(disposing);
     }
