@@ -29,10 +29,15 @@ jobs:
           & $compiler installer\TalkType.iss
       - name: Package portable build
         shell: pwsh
-        run: Compress-Archive -Path artifacts/TalkType-Windows-x64/* -DestinationPath artifacts/TalkType-Windows-x64.zip
+        run: |
+          Compress-Archive -Path artifacts/TalkType-Windows-x64/* -DestinationPath artifacts/TalkType-Windows-x64.zip
+          Get-FileHash artifacts/installer/*.exe, artifacts/TalkType-Windows-x64.zip -Algorithm SHA256 |
+            ForEach-Object { "{0}  {1}" -f $_.Hash.ToLowerInvariant(), (Split-Path $_.Path -Leaf) } |
+            Set-Content artifacts/SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: |
             artifacts/installer/*.exe
             artifacts/TalkType-Windows-x64.zip
+            artifacts/SHA256SUMS.txt

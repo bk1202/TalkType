@@ -26,12 +26,36 @@ from the published source for tagged releases.
 
 ## Run the packaged Windows alpha
 
-Extract the entire ZIP first—do not run the executable from inside the ZIP.
-Then open the packaged `TalkType.exe`. On first launch, click
-**Download local speech engine**. The default download is approximately 181 MiB.
-After setup, focus any text field and press `Ctrl+Win+Space` to start and stop.
-If that shortcut is occupied, TalkType automatically chooses an available
-fallback and tells you which one it selected.
+### Install TalkType
+
+1. Open the [latest TalkType release](https://github.com/bk1202/TalkType/releases/latest).
+2. Under **Assets**, download `TalkType-Setup-*-x64.exe`.
+3. Exit an older TalkType copy from its system-tray menu, then run the installer.
+4. Launch TalkType and select **Download local speech engine**. The initial
+   engine and fast English model download is approximately 181 MiB.
+5. Focus a text box and press `Ctrl+Win+Space` once to record and again to
+   transcribe. TalkType automatically selects a fallback shortcut if that one
+   is already registered by another application.
+
+The installer is per-user, requires no administrator access, creates an
+uninstaller, and can optionally add a desktop shortcut. A portable ZIP is also
+included in each release; extract the entire ZIP before opening `TalkType.exe`.
+
+### Windows SmartScreen notice
+
+TalkType is open source, but these early builds are not yet code-signed with a
+commercial certificate. Windows SmartScreen may therefore show **Windows
+protected your PC** or list the publisher as **Unknown publisher**, especially
+when a release has few downloads. This warning may not appear on every computer.
+
+Only continue if the installer came from the official
+[`bk1202/TalkType` releases page](https://github.com/bk1202/TalkType/releases).
+In the SmartScreen dialog, select **More info**, verify that the app name is the
+TalkType installer you downloaded, and then select **Run anyway**. Do not disable
+SmartScreen or Microsoft Defender. Published release notes include a SHA-256
+checksum for users who want to verify the download.
+
+### Run from source
 
 Developers can run from source with:
 
