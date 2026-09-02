@@ -4,9 +4,9 @@ import PackageDescription
 let package = Package(
     name: "TalkTypeCore",
     platforms: [.macOS(.v14), .iOS(.v17)],
-    products: [.library(name: "TalkTypeCore", targets: ["LockInCore"])],
+    products: [.library(name: "TalkTypeCore", targets: ["TalkTypeCore"])],
     targets: [
-        .target(name: "LockInCore"),
-        .testTarget(name: "LockInCoreTests", dependencies: ["LockInCore"])
+        .target(name: "TalkTypeCore"),
+        .testTarget(name: "TalkTypeCoreTests", dependencies: ["TalkTypeCore"])
     ]
 )

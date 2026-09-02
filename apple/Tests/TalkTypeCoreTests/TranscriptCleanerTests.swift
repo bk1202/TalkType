@@ -1,5 +1,5 @@
 import Testing
-@testable import LockInCore
+@testable import TalkTypeCore
 
 @Test func removesOnlyStandaloneFillers() {
     #expect(TranscriptCleaner.clean("Um, this is the result.") == "this is the result.")

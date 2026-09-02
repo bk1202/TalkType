@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal sealed class AppSettings
 {

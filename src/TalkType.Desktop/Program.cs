@@ -1,4 +1,4 @@
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal static class Program
 {
@@ -8,7 +8,7 @@ internal static class Program
         ApplicationConfiguration.Initialize();
         try
         {
-            Application.Run(new LockInContext());
+            Application.Run(new TalkTypeContext());
         }
         catch (Exception exception)
         {

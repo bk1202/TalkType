@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal sealed class EngineManager
 {

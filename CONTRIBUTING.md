@@ -13,7 +13,7 @@ Requirements:
 Build the desktop app:
 
 ```powershell
-dotnet build .\src\LockIn.Desktop\LockIn.Desktop.csproj
+dotnet build .\src\TalkType.Desktop\TalkType.Desktop.csproj
 ```
 
 The first app launch can download `whisper.cpp` and a local Whisper model. Do

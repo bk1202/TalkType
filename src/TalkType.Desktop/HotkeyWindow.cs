@@ -1,4 +1,4 @@
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal sealed class HotkeyWindow : NativeWindow, IDisposable
 {

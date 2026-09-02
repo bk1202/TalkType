@@ -1,6 +1,6 @@
 using System.Windows.Automation;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal static class ComposerLocator
 {

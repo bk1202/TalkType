@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal static partial class TranscriptCleaner
 {

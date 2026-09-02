@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal sealed class WaveRecorder : IDisposable
 {
@@ -38,7 +38,7 @@ internal sealed class WaveRecorder : IDisposable
     {
         if (!recording) throw new InvalidOperationException("Recorder is not running.");
         FinishCapture();
-        var path = Path.Combine(Path.GetTempPath(), $"lockin-{Guid.NewGuid():N}.wav");
+        var path = Path.Combine(Path.GetTempPath(), $"talktype-{Guid.NewGuid():N}.wav");
         WriteWave(path, audio.ToArray());
         audio.Clear();
         return path;

@@ -60,12 +60,12 @@ checksum for users who want to verify the download.
 Developers can run from source with:
 
 ```powershell
-dotnet run --project .\src\LockIn.Desktop
+dotnet run --project .\src\TalkType.Desktop
 ```
 
 The balanced English default is `small.en-q8_0`. Advanced users can still
-override the managed engine and model with `LOCKIN_WHISPER_EXE` and
-`LOCKIN_WHISPER_MODEL`.
+override the managed engine and model with `TALKTYPE_WHISPER_EXE` and
+`TALKTYPE_WHISPER_MODEL`.
 
 ## Product architecture
 

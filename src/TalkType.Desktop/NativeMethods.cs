@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal static partial class NativeMethods
 {

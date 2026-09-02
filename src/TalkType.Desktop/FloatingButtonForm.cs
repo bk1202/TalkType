@@ -1,4 +1,4 @@
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 using System.Diagnostics;
 using System.Drawing.Drawing2D;

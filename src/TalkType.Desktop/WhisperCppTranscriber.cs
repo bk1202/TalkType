@@ -1,13 +1,15 @@
 using System.Diagnostics;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal sealed class WhisperCppTranscriber
 {
     public async Task<string> TranscribeAsync(string wavePath, AppSettings settings, CancellationToken cancellationToken)
     {
-        var executable = Environment.GetEnvironmentVariable("LOCKIN_WHISPER_EXE") ?? AppPaths.WhisperExecutable;
-        var model = Environment.GetEnvironmentVariable("LOCKIN_WHISPER_MODEL") ?? AppPaths.DefaultModel;
+        var executable = Environment.GetEnvironmentVariable("TALKTYPE_WHISPER_EXE") ??
+            Environment.GetEnvironmentVariable("LOCKIN_WHISPER_EXE") ?? AppPaths.WhisperExecutable;
+        var model = Environment.GetEnvironmentVariable("TALKTYPE_WHISPER_MODEL") ??
+            Environment.GetEnvironmentVariable("LOCKIN_WHISPER_MODEL") ?? AppPaths.DefaultModel;
         if (!File.Exists(executable))
             throw new FileNotFoundException("Open Settings and download the local speech engine.", executable);
         if (!File.Exists(model))

@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal sealed class SettingsForm : Form
 {

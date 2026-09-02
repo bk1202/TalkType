@@ -1,6 +1,6 @@
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
-internal sealed class LockInContext : ApplicationContext
+internal sealed class TalkTypeContext : ApplicationContext
 {
     private readonly NotifyIcon tray;
     private readonly HotkeyWindow hotkey;
@@ -14,7 +14,7 @@ internal sealed class LockInContext : ApplicationContext
     private IntPtr destinationWindow;
     private bool busy;
 
-    public LockInContext()
+    public TalkTypeContext()
     {
         settings = SettingsStore.Load();
         hotkey = new HotkeyWindow();

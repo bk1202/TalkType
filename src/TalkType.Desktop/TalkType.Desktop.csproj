@@ -5,7 +5,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>TalkType</AssemblyName>
-    <RootNamespace>LockIn.Desktop</RootNamespace>
+    <RootNamespace>TalkType.Desktop</RootNamespace>
     <Product>TalkType</Product>
     <Description>Private, local-first voice typing</Description>
     <Version>0.1.2-alpha</Version>

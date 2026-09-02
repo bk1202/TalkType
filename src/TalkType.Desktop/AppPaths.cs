@@ -1,9 +1,11 @@
-namespace LockIn.Desktop;
+namespace TalkType.Desktop;
 
 internal static class AppPaths
 {
-    public static string Root { get; } = Path.Combine(
+    private static readonly string LegacyRoot = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LockIn");
+    public static string Root { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TalkType");
     public static string EngineDirectory => Path.Combine(Root, "engine");
     public static string ModelDirectory => Path.Combine(Root, "models");
     public static string SettingsFile => Path.Combine(Root, "settings.json");
@@ -13,6 +15,12 @@ internal static class AppPaths
 
     public static void EnsureDirectories()
     {
+        if (!Directory.Exists(Root) && Directory.Exists(LegacyRoot))
+        {
+            try { Directory.Move(LegacyRoot, Root); }
+            catch (IOException) { /* A running legacy copy can keep files open; continue with a clean folder. */ }
+            catch (UnauthorizedAccessException) { /* A clean setup remains safer than failing startup. */ }
+        }
         Directory.CreateDirectory(Root);
         Directory.CreateDirectory(EngineDirectory);
         Directory.CreateDirectory(ModelDirectory);
