@@ -57,9 +57,3 @@ Recordings are created in the operating system temp directory and deleted after
 transcription. `whisper.cpp` runs locally. The only lasting text is what the user
 pastes into the destination app. Transcript history is optional and can be
 disabled in Settings.
-
-## Build an installer
-
-Publish the self-contained app, then compile `installer/TalkType.iss` with Inno
-Setup 7 (or a compatible Inno Setup 6 compiler). The installer uses a per-user
-location and does not require administrator privileges.
