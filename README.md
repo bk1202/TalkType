@@ -11,10 +11,10 @@ from the published source for tagged releases.
 
 - Configurable global push-to-talk toggle (`Ctrl+Win+Space` by default)
 - Always-on-top talk button: click once to listen and again to transcribe
-- App-aware Talk button above Discord and WhatsApp message fields
+- Experimental icon-only mic overlaid in Discord and WhatsApp message bars
 - Discord Stable, Canary, PTB, Vesktop, and WhatsApp detection
 - Labelled Talk / Stop / Working states
-- Alternate chat positions and a draggable fallback outside the message toolbar
+- White/red chat mic with a bar-matched background; original offsets may overlap controls in some layouts
 - Contextual visibility by default, with a tray toggle to show it everywhere
 - Local WAV recording (16 kHz, mono, 16-bit PCM)
 - Offline transcription through `whisper.cpp`

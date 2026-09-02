@@ -70,31 +70,35 @@ internal static class Program
             floating.DrawToBitmap(bitmap, new Rectangle(Point.Empty, floating.Size));
             bitmap.Save(Path.Combine(output, "button-" + state + ".png"));
         }
-        var placement = floatingType.GetMethod("TryGetChatButtonBounds", BindingFlags.NonPublic | BindingFlags.Static)!;
-        foreach (var composer in new[] {
-            new Rectangle(560, 1010, 1050, 40), new Rectangle(560, 930, 700, 120),
-            new Rectangle(180, 650, 450, 40), new Rectangle(-1500, 820, 900, 80) })
+        floatingType.GetField("docked", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(floating, true);
+        floatingType.GetMethod("ApplyDockedAppearance", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(floating, null);
+        foreach (var state in new[] { "Ready", "Listening", "Working" })
         {
-            object[] arguments = [composer, new Rectangle(composer.Left - 100, 0, 1400, 1100), Rectangle.Empty];
-            if (!(bool)placement.Invoke(null, arguments)!) throw new Exception("Expected safe placement");
-            var result = (Rectangle)arguments[2];
-            if (result.Bottom > composer.Top - 24 || result.IntersectsWith(composer))
-                throw new Exception("Button overlaps composer toolbar zone");
+            floatingType.GetMethod("SetState")!.Invoke(floating, [Enum.Parse(stateType, state)]);
+            Application.DoEvents();
+            if (floating.Size != new Size(34, 34)) throw new Exception("Chat mic must remain compact in every state");
+            using var bitmap = new Bitmap(34, 34);
+            floating.DrawToBitmap(bitmap, new Rectangle(Point.Empty, floating.Size));
+            bitmap.Save(Path.Combine(output, "chat-mic-" + state + ".png"));
         }
-        object[] unsafeArguments = [new Rectangle(20, 30, 500, 40), new Rectangle(0, 0, 800, 600), Rectangle.Empty];
-        if ((bool)placement.Invoke(null, unsafeArguments)!) throw new Exception("Must hide when no space above composer");
-        Console.WriteLine("PASS: Button states render; resized/multiline/negative-monitor placement avoids composer; unsafe placement rejected.");
-        var choose = floatingType.GetMethod("TryChooseChatPosition", BindingFlags.NonPublic | BindingFlags.Static)!;
-        var sampleComposer = new Rectangle(560, 1010, 700, 40);
-        object[] alternate = [sampleComposer, new Rectangle(0, 0, 1920, 1080),
-            (Func<Rectangle, bool>)(candidate => candidate.X > 1000), Rectangle.Empty];
-        if (!(bool)choose.Invoke(null, alternate)! || ((Rectangle)alternate[3]).X > 1000)
-            throw new Exception("Blocked first anchor should use another location");
-        object[] fallback = [sampleComposer, new Rectangle(0, 0, 1920, 1080),
-            (Func<Rectangle, bool>)(_ => true), Rectangle.Empty];
-        if ((bool)choose.Invoke(null, fallback)! || ((Rectangle)fallback[3]).Bottom > sampleComposer.Top - 24)
-            throw new Exception("All-blocked fallback must remain outside toolbar");
-        Console.WriteLine("PASS: blocked anchor relocates; all-blocked case retains fallback bounds.");
+        floatingType.GetMethod("Undock", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(floating, null);
+        if (floating.Size != new Size(124, 44)) throw new Exception("Global button must restore its labelled size");
+        Console.WriteLine("PASS: compact chat microphone states and global-size restoration.");
+        var placement = assembly.GetType("TalkType.Desktop.ChatMicPlacement")!.GetMethod("GetBounds")!;
+        var window = new Rectangle(0, 0, 1920, 1080);
+        var composer = new Rectangle(570, 1010, 700, 40);
+        var bounds = (Rectangle)placement.Invoke(null, [composer, window, true])!;
+        if (bounds != new Rectangle(1278, 1013, 34, 34))
+            throw new Exception("Original in-bar offsets changed");
+        var wide = new Rectangle(570, 1010, 1300, 40);
+        if (((Rectangle)placement.Invoke(null, [wide, window, true])!).X != 1643)
+            throw new Exception("Discord right clamp changed");
+        if (((Rectangle)placement.Invoke(null, [wide, window, false])!).X != 1794)
+            throw new Exception("WhatsApp right clamp changed");
+        var multiline = new Rectangle(570, 950, 700, 100);
+        if (((Rectangle)placement.Invoke(null, [multiline, window, true])!).Y != 983)
+            throw new Exception("Original multiline centering changed");
+        Console.WriteLine("PASS: restored in-bar offsets, Discord/WhatsApp clamps and multiline centering.");
         floating.Hide();
     }
 

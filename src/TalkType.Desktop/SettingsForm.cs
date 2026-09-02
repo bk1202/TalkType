@@ -5,8 +5,8 @@ namespace TalkType.Desktop;
 internal sealed class SettingsForm : Form
 {
     private const string StartupKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private static readonly Color Surface = Color.FromArgb(22, 25, 36);
-    private static readonly Color Muted = Color.FromArgb(164, 172, 193);
+    private static readonly Color Surface = AppTheme.Surface;
+    private static readonly Color Muted = AppTheme.Muted;
     private readonly AppSettings settings;
     private readonly EngineManager engine;
     private readonly Label status = Copy("", 11, true);
@@ -21,7 +21,7 @@ internal sealed class SettingsForm : Form
     private readonly TextBox preview = new()
     {
         Multiline = true, AutoSize = false, Height = 112, MinimumSize = new Size(0, 112), ReadOnly = true, ScrollBars = ScrollBars.Vertical,
-        BackColor = Color.FromArgb(15, 18, 27), ForeColor = Color.White,
+        BackColor = AppTheme.Input, ForeColor = Color.White,
         BorderStyle = BorderStyle.FixedSingle, AccessibleName = "Latest transcript",
         PlaceholderText = "Your words will appear here after you stop recording."
     };
@@ -33,7 +33,7 @@ internal sealed class SettingsForm : Form
     private readonly TextBox vocabulary = new()
     {
         Multiline = true, AutoSize = false, Height = 80, MinimumSize = new Size(0, 80), ScrollBars = ScrollBars.Vertical,
-        BackColor = Color.FromArgb(15, 18, 27), ForeColor = Color.White,
+        BackColor = AppTheme.Input, ForeColor = Color.White,
         BorderStyle = BorderStyle.FixedSingle, AccessibleName = "Personal vocabulary",
         PlaceholderText = "Names or specialist terms, one per line"
     };
@@ -59,8 +59,8 @@ internal sealed class SettingsForm : Form
         ClientSize = new Size(760, 740);
         MinimumSize = new Size(580, 540);
         StartPosition = FormStartPosition.CenterScreen;
-        BackColor = Color.FromArgb(13, 15, 22);
-        ForeColor = Color.FromArgb(235, 237, 245);
+        BackColor = AppTheme.Background;
+        ForeColor = AppTheme.Text;
         Font = new Font("Segoe UI", 10);
 
         key.Items.AddRange(new object[] { Keys.Space, Keys.F6, Keys.F7, Keys.F8, Keys.F9, Keys.F10, Keys.F11, Keys.F12 });
@@ -118,8 +118,8 @@ internal sealed class SettingsForm : Form
             preferences.Visible = showPreferences;
             save.Visible = showPreferences;
             saveFeedback.Text = showPreferences ? "Changes apply when you save." : "Closing this window keeps TalkType in the system tray.";
-            homeButton.BackColor = showPreferences ? Surface : Color.FromArgb(112, 92, 238);
-            preferencesButton.BackColor = showPreferences ? Color.FromArgb(112, 92, 238) : Surface;
+            homeButton.BackColor = showPreferences ? Surface : AppTheme.Accent;
+            preferencesButton.BackColor = showPreferences ? AppTheme.Accent : Surface;
             if (showPreferences) preferences.BringToFront(); else home.BringToFront();
         }
         homeButton.Click += (_, _) => Navigate(false);
@@ -162,7 +162,7 @@ internal sealed class SettingsForm : Form
             TalkButtonState.Working => "Transcribing…",
             _ => "Start test recording"
         };
-        record.BackColor = state == TalkButtonState.Listening ? Color.FromArgb(173, 53, 72) : Color.FromArgb(112, 92, 238);
+        record.BackColor = state == TalkButtonState.Listening ? AppTheme.Recording : AppTheme.Accent;
         recordingStatus.Text = state switch
         {
             TalkButtonState.Listening => "Listening — your microphone is on. Click Stop when you are finished.",
@@ -273,19 +273,19 @@ internal sealed class SettingsForm : Form
     };
 
     private static CheckBox Check(string text) => new()
-    { Text = text, AutoSize = true, ForeColor = Color.FromArgb(225, 228, 240), Margin = new Padding(0, 5, 14, 8) };
+    { Text = text, AutoSize = true, ForeColor = AppTheme.Text, Margin = new Padding(0, 5, 14, 8) };
 
     private static Button ActionButton(string text, bool primary = false)
     {
         var button = new Button
         {
             Text = text, AccessibleName = text, AutoSize = true, MinimumSize = new Size(100, 38),
-            FlatStyle = FlatStyle.Flat, BackColor = primary ? Color.FromArgb(112, 92, 238) : Surface,
+            FlatStyle = FlatStyle.Flat, BackColor = primary ? AppTheme.Accent : Surface,
             ForeColor = Color.White, Padding = new Padding(12, 4, 12, 4), Cursor = Cursors.Hand,
             Margin = new Padding(0, 4, 12, 10)
         };
         button.FlatAppearance.BorderSize = primary ? 0 : 1;
-        button.FlatAppearance.BorderColor = Color.FromArgb(68, 74, 96);
+        button.FlatAppearance.BorderColor = AppTheme.Border;
         return button;
     }
 

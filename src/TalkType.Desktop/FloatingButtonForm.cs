@@ -23,9 +23,7 @@ internal sealed class FloatingButtonForm : Form
     private bool docked;
     private Point freeLocation;
     private TalkButtonState currentState;
-    private bool fallbackPlacement;
-    private Point chatOffset;
-    private IntPtr chatWindow;
+    private Color chatBackground = AppTheme.Surface;
 
     public event EventHandler? ToggleRequested;
     public event EventHandler? SettingsRequested;
@@ -42,7 +40,7 @@ internal sealed class FloatingButtonForm : Form
             Math.Max(0, Screen.PrimaryScreen!.WorkingArea.Right - Width - 24),
             Math.Max(0, Screen.PrimaryScreen.WorkingArea.Bottom - Height - 24));
         freeLocation = Location;
-        BackColor = Color.FromArgb(24, 27, 39);
+        BackColor = AppTheme.Surface;
         Padding = Padding.Empty;
 
         talkButton = new Button
@@ -50,13 +48,13 @@ internal sealed class FloatingButtonForm : Form
             Dock = DockStyle.Fill,
             Text = string.Empty,
             FlatStyle = FlatStyle.Flat,
-            BackColor = Color.FromArgb(24, 27, 39),
+            BackColor = AppTheme.Surface,
             ForeColor = Color.White,
             Font = new Font(SystemFonts.DefaultFont.FontFamily, 11, FontStyle.Bold),
             Cursor = Cursors.Hand,
             TabStop = false
         };
-        talkButton.FlatAppearance.BorderColor = Color.FromArgb(126, 105, 255);
+        talkButton.FlatAppearance.BorderColor = AppTheme.AccentLight;
         talkButton.FlatAppearance.BorderSize = 0;
         talkButton.Paint += DrawTalkIcon;
         talkButton.Click += (_, _) => { if (!dragging) ToggleRequested?.Invoke(this, EventArgs.Empty); };
@@ -101,15 +99,15 @@ internal sealed class FloatingButtonForm : Form
             TalkButtonState.Working => "Transcribing",
             _ => "TalkType: click to start recording"
         };
-        talkButton.BackColor = currentState switch
+        talkButton.BackColor = docked ? chatBackground : currentState switch
         {
-            TalkButtonState.Listening => Color.FromArgb(68, 29, 39),
-            TalkButtonState.Working => Color.FromArgb(31, 43, 78),
-            _ => Color.FromArgb(24, 27, 39)
+            TalkButtonState.Listening => Color.FromArgb(60, 24, 24),
+            TalkButtonState.Working => Color.FromArgb(18, 42, 62),
+            _ => AppTheme.Surface
         };
         talkButton.ForeColor = currentState == TalkButtonState.Listening
-            ? Color.FromArgb(255, 104, 117)
-            : Color.FromArgb(196, 181, 253);
+            ? AppTheme.RecordingLight
+            : docked ? Color.White : AppTheme.AccentLight;
         talkButton.Invalidate();
     }
 
@@ -174,29 +172,16 @@ internal sealed class FloatingButtonForm : Form
         }
 
         var windowBounds = Rectangle.FromLTRB(rectangle.Left, rectangle.Top, rectangle.Right, rectangle.Bottom);
-        if (!TryGetChatButtonBounds(composer, windowBounds, out var buttonBounds))
+        var buttonBounds = ChatMicPlacement.GetBounds(composer, windowBounds, isDiscord);
+        if (!docked || Bounds != buttonBounds)
         {
-            ShowOrHideAwayFromMessagingApps();
-            return;
+            if (Visible) Hide();
+            if (!docked) freeLocation = Location;
+            chatBackground = SampleBackground(buttonBounds);
+            docked = true;
+            ApplyDockedAppearance();
+            Bounds = buttonBounds;
         }
-        if (chatWindow != foreground) { chatWindow = foreground; chatOffset = Point.Empty; }
-        fallbackPlacement = !TryChooseChatPosition(composer, windowBounds,
-            candidate => ComposerLocator.HasInteractiveControlAt(foreground, candidate), out buttonBounds);
-        if (fallbackPlacement)
-        {
-            // A message image or transient accessibility failure must not make
-            // the only visible recording control disappear. This is a movable
-            // overlay over chat content, never a replacement toolbar control.
-            buttonBounds.Offset(chatOffset);
-            buttonBounds.X = Math.Clamp(buttonBounds.X, windowBounds.Left, windowBounds.Right - buttonBounds.Width);
-            buttonBounds.Y = Math.Clamp(buttonBounds.Y, windowBounds.Top, composer.Top - 24 - buttonBounds.Height);
-        }
-        if (!docked) freeLocation = Location;
-        docked = true;
-        // Never impersonate or paint over a native toolbar slot. Keep a distinct
-        // TalkType control above the confirmed composer, including its padding.
-        if (Size != buttonBounds.Size) ApplyDockedAppearance();
-        Bounds = buttonBounds;
         // Prepare the final docked size and position before displaying the
         // window. Showing first caused a one-frame flash of the old 82px tile.
         if (!Visible) Show();
@@ -243,69 +228,69 @@ internal sealed class FloatingButtonForm : Form
 
     private void ApplyFloatingAppearance()
     {
-        Size = new Size(124, 44);
+        ApplyButtonAppearance(new Size(124, 44));
+    }
+
+    private void ApplyButtonAppearance(Size size)
+    {
+        Size = size;
         Padding = Padding.Empty;
-        BackColor = Color.FromArgb(24, 27, 39);
+        BackColor = AppTheme.Surface;
         var oldRegion = Region;
         using var shape = Capsule(new RectangleF(0, 0, Width, Height));
         Region = new Region(shape);
         oldRegion?.Dispose();
-        talkButton.FlatAppearance.BorderColor = Color.FromArgb(126, 105, 255);
+        talkButton.FlatAppearance.BorderColor = AppTheme.AccentLight;
         talkButton.FlatAppearance.BorderSize = 0;
-        talkButton.FlatAppearance.MouseOverBackColor = Color.FromArgb(39, 43, 61);
+        talkButton.FlatAppearance.MouseOverBackColor = AppTheme.Hover;
+        talkButton.FlatAppearance.MouseDownBackColor = AppTheme.Hover;
         ApplyStateAppearance();
     }
 
     private void ApplyDockedAppearance()
     {
-        ApplyFloatingAppearance();
+        ApplyButtonAppearance(new Size(ChatMicPlacement.Width, ChatMicPlacement.Height));
+        var oldRegion = Region;
+        Region = null;
+        oldRegion?.Dispose();
+        BackColor = chatBackground;
+        talkButton.FlatAppearance.MouseOverBackColor = chatBackground;
+        talkButton.FlatAppearance.MouseDownBackColor = chatBackground;
     }
 
-    internal static bool TryGetChatButtonBounds(Rectangle composer, Rectangle window, out Rectangle bounds)
+    private static Color SampleBackground(Rectangle bounds)
     {
-        // The editable text rectangle is inset from the surrounding message bar.
-        // Stay above it rather than guessing widths of gift/GIF/emoji controls.
-        bounds = new Rectangle(composer.Left, composer.Top - 24 - 44, 124, 44);
-        return composer.Width >= bounds.Width && window.Contains(bounds) && !bounds.IntersectsWith(composer);
-    }
-
-    internal static bool TryChooseChatPosition(Rectangle composer, Rectangle window,
-        Func<Rectangle, bool> blocked, out Rectangle bounds)
-    {
-        TryGetChatButtonBounds(composer, window, out bounds);
-        var fallback = bounds;
-        // Try right, middle, then left: the old left-only anchor often landed
-        // on an image/GIF or a message author's button.
-        foreach (var x in new[] { composer.Right - bounds.Width, composer.Left + (composer.Width - bounds.Width) / 2, composer.Left })
+        try
         {
-            var candidate = new Rectangle(x, fallback.Y, fallback.Width, fallback.Height);
-            if (window.Contains(candidate) && !blocked(candidate)) { bounds = candidate; return true; }
+            using var bitmap = new Bitmap(1, 1);
+            using var graphics = Graphics.FromImage(bitmap);
+            graphics.CopyFromScreen(bounds.Left - 4, bounds.Top + bounds.Height / 2, 0, 0, new Size(1, 1));
+            return bitmap.GetPixel(0, 0);
         }
-        bounds = fallback;
-        return false;
+        catch { return SystemColors.ControlDarkDark; }
     }
 
     private void DrawTalkIcon(object? sender, PaintEventArgs eventArgs)
     {
         var graphics = eventArgs.Graphics;
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        using var border = new Pen(Color.FromArgb(126, 105, 255), 1);
+        using var border = new Pen(currentState == TalkButtonState.Listening ? AppTheme.RecordingLight : AppTheme.AccentLight, 1);
         using var outline = Capsule(new RectangleF(1, 1, talkButton.Width - 3, talkButton.Height - 3));
-        graphics.DrawPath(border, outline);
+        if (!docked) graphics.DrawPath(border, outline);
         var caption = currentState switch
         {
             TalkButtonState.Listening => "Stop",
             TalkButtonState.Working => "Working",
             _ => "Talk"
         };
-        TextRenderer.DrawText(graphics, caption, talkButton.Font,
+        if (!docked) TextRenderer.DrawText(graphics, caption, talkButton.Font,
             new Rectangle(42, 0, talkButton.Width - 48, talkButton.Height), talkButton.ForeColor,
             TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.NoPadding);
-        var offsetX = 5f;
+        var offsetX = docked ? (talkButton.ClientSize.Width - 34) / 2f : 5f;
         var offsetY = (talkButton.ClientSize.Height - 34) / 2f;
         var color = currentState == TalkButtonState.Listening
-            ? Color.FromArgb(255, 104, 117)
-            : Color.FromArgb(196, 181, 253);
+            ? AppTheme.RecordingLight
+            : docked ? Color.White : AppTheme.AccentLight;
 
         if (currentState == TalkButtonState.Working)
         {
@@ -344,7 +329,7 @@ internal sealed class FloatingButtonForm : Form
         if (eventArgs.Button != MouseButtons.Left) return;
         // A docked toolbar control is click-only. Treating mouse-down as the
         // beginning of a drag caused it to expand into the standalone button.
-        if (docked && !fallbackPlacement) return;
+        if (docked) return;
         dragOrigin = eventArgs.Location;
         dragging = false;
     }
@@ -361,13 +346,13 @@ internal sealed class FloatingButtonForm : Form
 
     private void OnDragMove(object? sender, MouseEventArgs eventArgs)
     {
-        if (eventArgs.Button != MouseButtons.Left || (docked && !fallbackPlacement)) return;
+        if (eventArgs.Button != MouseButtons.Left || docked) return;
         if (Math.Abs(eventArgs.X - dragOrigin.X) + Math.Abs(eventArgs.Y - dragOrigin.Y) > 5) dragging = true;
         if (dragging)
         {
             var delta = new Point(eventArgs.X - dragOrigin.X, eventArgs.Y - dragOrigin.Y);
             Location = new Point(Location.X + delta.X, Location.Y + delta.Y);
-            if (docked) chatOffset.Offset(delta); else freeLocation = Location;
+            freeLocation = Location;
         }
     }
 
